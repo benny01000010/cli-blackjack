@@ -11,27 +11,6 @@ suits=("♠" "♥" "♦" "♣")
 ranks=("2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K" "A")
 deck_index=0
 
-#bg_music=  Will add music later - see readme
-#shuffle_sound=
-#win_sound=
-#lose_sound=
-
-# Music and sound effects - will be added later
-#play_sound() {
-#    local file="$1"
-#    if [[ -f "$file" ]]; then
-#        # macOS
-#        if command -v afplay &> /dev/null; then
-#            afplay "$file" &
-#        # Linux
-#        elif command -v mpg123 &> /dev/null; then
-#            mpg123 -q "$file" &
-#        elif command -v paplay &> /dev/null; then
-#            paplay "$file" &
-#        fi
-#    fi
-#}
-
 # Generates and shuffles a new deck of cards.
 create_deck() {
     deck=()
@@ -168,11 +147,6 @@ else
 fi
 
 }
-
-#if command -v afplay &> /dev/null; then    Will add music later
-#    afplay dealer_shuffle.wav &
-#    music_pid=$!
-#fi
 
 echo "Welcome to cli-blackjack!"
 echo "Fuel your gambling addiction without leaving your terminal."
