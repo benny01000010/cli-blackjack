@@ -7,9 +7,17 @@
 
 
 # Card suits and ranks (standard 52-card deck, no jokers) (relatively self explanatory)
+
+# Set this to FALSE if you DO NOT want your screen cleared!!!
+clear_screen=true
+
 suits=("♠" "♥" "♦" "♣")
 ranks=("2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K" "A")
 deck_index=0
+red='\033[0;31m'
+blue='\033[0;34m'
+green='\033[0;32m'
+nc='\033[0m'
 
 # Generates and shuffles a new deck of cards.
 create_deck() {
@@ -50,21 +58,86 @@ calc_hand_value() {
     echo $total
 }
 
-# Display cards
-show_hand() {
-    local label="$1"
-    shift
-    local hand=("$@")
-    echo -n "$label: "
-    printf '%s ' "${hand[@]}"
-    echo ""
+# Draws a single card as ASCII art.
+draw_single_card() {
+    local card="$1"
+    local rank="${card%?}"
+    local suit_raw="${card: -1}"
+    
+    if [[ "$suit_raw" == "♥" || "$suit_raw" == "♦" ]]; then
+        local suit="${red}$suit_raw${nc}"
+    else
+        local suit="$suit_raw"
+    fi
+
+    if [[ "$rank" == "10" ]]; then
+        local top_rank="10"
+        local bot_rank="10"
+    else
+        local top_rank="$rank "
+        local bot_rank=" $rank"
+    fi
+
+    printf "┌─────────┐\n"
+    printf "│${top_rank}       │\n"
+    printf "│         │\n"
+    printf "│    $suit    │\n"
+    printf "│         │\n"
+    printf "│       ${bot_rank}│\n"
+    printf "└─────────┘\n"
 }
 
-# Deal
+draw_hidden_card() {
+    printf "┌─────────┐\n"
+    printf "│░░░░░░░░░│\n"
+    printf "│░░░░░░░░░│\n"
+    printf "│░░░░░░░░░│\n"
+    printf "│░░░░░░░░░│\n"
+    printf "│░░░░░░░░░│\n"
+    printf "└─────────┘\n"
+}
 
+# Draws a hand of cards as ASCII art.
+draw_hand() {
+    local hide_second=false
+    if [[ "$1" == "--hide-second" ]]; then
+        hide_second=true
+        shift
+    fi
+
+    local cards=("$@")
+    local card_lines=()
+
+    for i in "${!cards[@]}"; do
+        if [[ $hide_second == true && $i -eq 1 ]]; then
+            card_lines[$i]=$(draw_hidden_card)
+        else
+            card_lines[$i]=$(draw_single_card "${cards[$i]}")
+        fi
+    done
+
+    for line_num in {0..6}; do
+        for i in "${!cards[@]}"; do
+            local card_line=$(echo "${card_lines[$i]}" | sed -n "$((line_num + 1))p")
+            echo -n "$card_line "
+        done
+        echo ""
+    done
+}
 
 # Main game logic
 play_game() {
+
+    echo "Starting a new game..."
+    sleep 1.5
+    if [[ $clear_screen == true]] && clear
+
+    if [[ $deck_index -gt 40 ]]; then
+        echo "Shuffling new deck..."
+        sleep 1
+        create_deck
+    fi
+    
     create_deck
 
     player_hand=()
@@ -76,11 +149,14 @@ play_game() {
     player_hand+=("${deck[$deck_index]}"); ((deck_index++))
     dealer_hand+=("${deck[$deck_index]}"); ((deck_index++))
 
-    # Show initial hands
-    show_hand "Your hand:" "${player_hand[@]}"
-    echo "Your total: ($(calc_hand_value "${player_hand[@]}"))"
     echo ""
-    echo "Dealer's hand: ${dealer_hand[0]}"
+    echo "Your hand:"
+    draw_hand "${player_hand[@]}"
+    echo "Total: $(calc_hand_value "${player_hand[@]}")"
+    echo ""
+
+    echo "Dealer's hand:"
+    draw_hand --hide-second "${dealer_hand[@]}"
     echo ""
 
     # Player's turn
@@ -95,16 +171,47 @@ play_game() {
             return
         fi
 
-    read -p "Hit or Stand? (h/s): " choice
+    read -p "Hit or Stand? (h/s/?): " choice
     echo ""
 
-    if [[ "$choice" =~ ^[Hh]$ ]]; then
+    # Help option
+    if [[ "$choice" == "?" ]]; then
+        echo "----------------------------------"
+        echo "          BLACKJACK HELP          "
+        echo "----------------------------------"
+        echo "Your goal is to get as close to 21"
+        echo "as possible without going over."
+        echo ""
+        echo "Card Values:"
+        echo "Number Cards (2-10): Face value"
+        echo "Face Cards (J, Q, K): 10 points"
+        echo "Aces: 11 points (or 1 point if 11 would bust)"
+        echo ""
+        echo "Commands:"
+        echo "h - Hit (draw another card)"
+        echo "s - Stand (end your turn)"
+        echo "? - Show this help message"
+        echo ""
+        echo "Tips:"
+        echo "If your initial two cards total 21,"
+        echo "you have a Blackjack and win instantly!"
+        echo ""
+        echo "The dealer will hit until their total is at least 17."
+        echo ""
+        echo "If you still need help, visit:"
+        echo "https://bicyclecards.com/how-to-play/blackjack"
+        echo ""
+        echo "Good luck!"
+        echo ""
+        continue
+
+    elif [[ "$choice" =~ ^[Hh]$ ]]; then
         new_card="${deck[$deck_index]}"
         ((deck_index++))
         player_hand+=("$new_card")
-        echo "You drew: $new_card"
-        show_hand "Your hand:" "${player_hand[@]}"
-        echo "Your total: ($(calc_hand_value "${player_hand[@]}"))"
+        echo "Your hand:"
+        draw_hand "${player_hand[@]}"
+        echo "Total: $(calc_hand_value "${player_hand[@]}")"
         echo ""
     else
         break
@@ -116,20 +223,21 @@ player_total=$(calc_hand_value "${player_hand[@]}")
 [[ $player_total -gt 21 ]] && return
 
 # Dealer's turn
+echo "Dealer's turn..."
+sleep 1
 echo "Dealer reveals:"
-show_hand "Dealer's hand:" "${dealer_hand[@]}"
+draw_hand "${dealer_hand[@]}"
 dealer_total=$(calc_hand_value "${dealer_hand[@]}")
 echo "Dealer's total: $dealer_total"
-echo ""
 
 while [[ $dealer_total -lt 17 ]]; do
     echo "Dealer hits..."
-    sleep 0.5
-     new_card="${deck[$deck_index]}"
+    sleep 1
+   new_card="${deck[$deck_index]}"
     ((deck_index++))
     dealer_hand+=("$new_card")
-    echo "Dealer drew: $new_card"
-    show_hand "Dealer's hand:" "${dealer_hand[@]}"
+   
+    draw_hand "${dealer_hand[@]}"
     dealer_total=$(calc_hand_value "${dealer_hand[@]}")
     echo "Dealer's total: $dealer_total"
     echo ""
@@ -141,7 +249,7 @@ if [[ $dealer_total -gt 21 ]]; then
 elif [[ $dealer_total -gt $player_total ]]; then
     echo "Dealer wins with $dealer_total against your $player_total. You lose."
 elif [[ $dealer_total -lt $player_total ]]; then
-    echo "You win with $player_total against dealer's $dealer_total! Congratulations!"
+    echo "You win with $player_total against the dealer's $dealer_total! Congratulations!"
 else
     echo "It's a tie at $player_total!"
 fi

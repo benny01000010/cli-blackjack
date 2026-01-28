@@ -4,6 +4,9 @@ Simply clone this repository and make blackjack.sh executable (if it isn't alrea
 
 As is per usual, you will be playing against a "dealer" who will always hit if he has less than 17 points in his hand. 
 
+PLEASE NOTE that this game will CLEAR YOUR TERMINAL upon starting a new game. 
+If you DO NOT want your screen cleared change the clear_screen variable at the top of blackjack.sh to false.
+
 # Development
 - Add some color to your terminal
 - Add backround music and sound effects (maybe)
