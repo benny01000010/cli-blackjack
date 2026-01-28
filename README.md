@@ -7,6 +7,8 @@ As is per usual, you will be playing against a "dealer" who will always hit if h
 PLEASE NOTE that this game will CLEAR YOUR TERMINAL upon starting a new game. 
 If you DO NOT want your screen cleared change the clear_screen variable at the top of blackjack.sh to false.
 
+Game stats will be displayed when you are done playing, so don't CTRL+C! Instead, enter "n" when you are prompted to play again.
+
 # Development
 - Add some color to your terminal
 - Add backround music and sound effects (maybe)

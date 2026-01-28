@@ -5,19 +5,23 @@
 # Play against a computer dealer and see if you can beat the house!
 # Full rules and how to play here: https://bicyclecards.com/how-to-play/blackjack
 
-
-# Card suits and ranks (standard 52-card deck, no jokers) (relatively self explanatory)
-
 # Set this to FALSE if you DO NOT want your screen cleared!!!
 clear_screen=true
 
 suits=("♠" "♥" "♦" "♣")
 ranks=("2" "3" "4" "5" "6" "7" "8" "9" "10" "J" "Q" "K" "A")
+
 deck_index=0
+
 red='\033[0;31m'
 blue='\033[0;34m'
 green='\033[0;32m'
+yellow='\033[0;33m'
 nc='\033[0m'
+
+wins=0
+losses=0
+ties=0
 
 # Generates and shuffles a new deck of cards.
 create_deck() {
@@ -128,10 +132,6 @@ draw_hand() {
 # Main game logic
 play_game() {
 
-    echo "Starting a new game..."
-    sleep 1.5
-    if [[ $clear_screen == true]] && clear
-
     if [[ $deck_index -gt 40 ]]; then
         echo "Shuffling new deck..."
         sleep 1
@@ -164,10 +164,12 @@ play_game() {
         player_total=$(calc_hand_value "${player_hand[@]}")
 
         if [[ $player_total -eq 21 ]]; then
-            echo "Blackjack! You have 21! Winner!"
+            echo -e "${green}Blackjack! You have 21! Winner!${nc}"
+            ((wins++))
             return
         elif [[ $player_total -gt 21 ]]; then
-            echo "Bust! You exceeded 21. You lose."
+            echo -e "${red}Bust! You exceeded 21. You lose.${nc}"
+            ((losses++))
             return
         fi
 
@@ -213,8 +215,10 @@ play_game() {
         draw_hand "${player_hand[@]}"
         echo "Total: $(calc_hand_value "${player_hand[@]}")"
         echo ""
-    else
+    elif [[ "$choice" =~ ^[Ss]$ ]]; then
         break
+    else
+        echo -e "${red}Invalid choice. Please enter 'h' to Hit, 's' to Stand, or '?' for help.${nc}"
     fi
 done
 
@@ -224,7 +228,7 @@ player_total=$(calc_hand_value "${player_hand[@]}")
 
 # Dealer's turn
 echo "Dealer's turn..."
-sleep 1
+sleep 0.75
 echo "Dealer reveals:"
 draw_hand "${dealer_hand[@]}"
 dealer_total=$(calc_hand_value "${dealer_hand[@]}")
@@ -245,13 +249,17 @@ done
 
 # Determine winner
 if [[ $dealer_total -gt 21 ]]; then
-    echo "Dealer busts! Winner!"
+    echo -e "${green}Dealer busts! Winner!${nc}"
+    ((wins++))
 elif [[ $dealer_total -gt $player_total ]]; then
-    echo "Dealer wins with $dealer_total against your $player_total. You lose."
+    echo -e "${red}Dealer wins with $dealer_total against your $player_total. You lose.${nc}"
+    ((losses++))
 elif [[ $dealer_total -lt $player_total ]]; then
-    echo "You win with $player_total against the dealer's $dealer_total! Congratulations!"
+    echo -e "${green}You win with $player_total against the dealer's $dealer_total! Congratulations!${nc}"
+    ((wins++))
 else
-    echo "It's a tie at $player_total!"
+    echo -e "${yellow}It's a tie at $player_total!${nc}"
+    ((ties++))
 fi
 
 }
@@ -273,7 +281,16 @@ cat <<'EOF'
 EOF
 
 # Gambling addiction
+first_game=true
 while true; do
+    if [[ $first_game == true ]]; then
+        first_game=false
+    else
+        if [[ $clear_screen == true ]]; then
+            clear
+        fi
+    fi
+
     play_game
     echo ""
     read -p "Play again? (y/n): " again
@@ -283,5 +300,21 @@ while true; do
     echo ""
 done
 
-echo "Thanks for playing cli-blackjack! Goodbye!"
-echo "@benny01000010 on Github"
+echo ""
+echo "-----------------------------"
+echo "         GAME STATS          "
+echo "-----------------------------"
+echo "Total Games Played: $((wins + losses + ties))"
+echo -e "${green}Wins:   ${wins}${nc}"
+echo -e "${red}Losses: ${losses}${nc}"
+echo -e "${yellow}Ties:   ${ties}${nc}"
+total_games=$((wins + losses + ties))
+if [[ $total_games -gt 0 ]]; then
+    win_pct=$((wins * 100 / total_games))
+    echo "% of Games Won: ${win_pct}%"
+fi
+echo ""
+
+sleep 0.5
+echo -e "${green}Thanks for playing cli-blackjack! Goodbye!${nc}"
+echo -e "${blue}@benny01000010 on Github${nc}"
