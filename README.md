@@ -10,7 +10,6 @@ If you DO NOT want your screen cleared change the clear_screen variable at the t
 Game stats will be displayed when you are done playing, so don't CTRL+C! Instead, enter "n" when you are prompted to play again.
 
 # Development
-- Add some color to your terminal
+- Add some color to your terminal (in progress)
 - Add backround music and sound effects (maybe)
-- Add ASCII card art
 - Bugfixes and code optimizations

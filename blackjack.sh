@@ -129,6 +129,72 @@ draw_hand() {
     done
 }
 
+# Checks for *noice* hands
+check_easter_eggs() {
+
+    local hand=("$@")
+    local hand_size=${#hand[@]}
+    local total=$(calc_hand_value "${hand[@]}")
+
+    # 5 Cards
+    if [[ $hand_size -eq 5 && $total -le 21 ]]; then
+        echo ""
+        echo -e "${green}FIVE CARD CHARLIE!!!${nc}"
+        echo -e "${green}You might wanna stand now...${nc}"
+        echo ""
+    fi
+
+    # Flush
+    local all_same_suit=true
+    local first_suit="${hand[0]: -1}"
+    for card in "${hand[@]}"; do
+        if [[ "${card: -1}" != "$first_suit" ]]; then
+            all_same_suit=false
+            break
+        fi
+    done
+
+    if [[ $all_same_suit == true && $hand_size -ge 3 ]]; then
+        echo ""
+        echo -e "${green}FLUSH!!!${nc}"
+        echo -e "${green}All cards are ${first_suit}!${nc}"
+        echo ""
+    fi
+
+    # Blackjack flush 21 with 2 cards, same suit
+    if [[ $total -eq 21 && $hand_size -eq 2 && $all_same_suit == true ]]; then
+        local suit1="${hand[0]: -1}"
+        local suit2="${hand[1]: -1}"
+        if [[ "$suit1" == "$suit2" ]]; then
+            echo ""
+            echo -e "${green}BLACKJACK FLUSH!!!${nc}"
+            echo ""
+        fi
+    fi
+
+    # 777
+    if [[ $hand_size -eq 3 ]]; then
+        local rank1=${hand[0]%?}
+        local rank2=${hand[1]%?}
+        local rank3=${hand[2]%?}
+
+        if [[ "$rank1" == "7" && "$rank2" == "7" && "$rank3" == "7" ]]; then
+            echo ""
+            echo -e "${green}777!!! JACKPOT!!!${nc}"
+            echo -e "${green}How lucky!${nc}"
+            echo ""
+        fi
+
+    # 666
+    if [[ "$rank1" == "6" && "$rank2" == "6" && "$rank3" == "6" ]]; then
+            echo ""
+            echo -e "${green}666!!! The DEVIL'S HAND!!!${nc}"
+            echo -e "${green}How spooky...${nc}"
+            echo ""
+        fi
+    fi
+}
+
 # Main game logic
 play_game() {
 
@@ -154,6 +220,8 @@ play_game() {
     draw_hand "${player_hand[@]}"
     echo "Total: $(calc_hand_value "${player_hand[@]}")"
     echo ""
+
+    check_easter_eggs "${player_hand[@]}"
 
     echo "Dealer's hand:"
     draw_hand --hide-second "${dealer_hand[@]}"
@@ -215,6 +283,7 @@ play_game() {
         draw_hand "${player_hand[@]}"
         echo "Total: $(calc_hand_value "${player_hand[@]}")"
         echo ""
+        check_easter_eggs "${player_hand[@]}"
     elif [[ "$choice" =~ ^[Ss]$ ]]; then
         break
     else
