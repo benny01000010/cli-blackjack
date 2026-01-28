@@ -6,6 +6,6 @@ As is per usual, you will be playing against a "dealer" who will always hit if h
 
 # Development
 - Add some color to your terminal
-- Add backround music and sound effects (once I can find some good royalty free clips)
+- Add backround music and sound effects (maybe)
 - Add ASCII card art
 - Bugfixes and code optimizations
